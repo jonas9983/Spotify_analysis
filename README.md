@@ -9,14 +9,14 @@ The get_playlists function carries a parameter = {0,1} that decides whether to u
 
 ### spotify_utils.py 
 
- If update_dataframe = 1:
+If update_dataframe = 1:
     # connect with the spotify API and collect track properties (track names, track ids, genres,...). 
     # then it either creates or updates the dataframe stored on the data folder
 
 
     # PS: talvez possa mudar a change_pandas_variable, nao preciso de chama-la aqui
 
-# else:
+else:
     # read the audio_features.csv file on the data folder 
     # analyze this data 
 
