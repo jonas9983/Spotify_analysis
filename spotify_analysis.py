@@ -9,8 +9,6 @@ import pandas as pd
 import math
 import numpy as np
 
-import sys, os
-
 def analyze_dataframe(features, filename, graph=0):
     features = dataset_information(dataset=features, filename=filename, change=0)
 
