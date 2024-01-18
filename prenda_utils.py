@@ -5,8 +5,9 @@ import os
 import pandas as pd
 import math
 
-# Code is not perfect:
-# - I need to 
+from use_spotify_api import get_token, get_track_information
+
+# Code is not perfect
 
 def move_to_file(folder_track_names, origin_path, destination_path, mv = 0):
     path_track_names = folder_track_names + ".mp3"
@@ -70,7 +71,7 @@ def download_missing_songs(spotify, id, paths, dl = 0):
     music_dict = {'full_music_name': [], 'track_name': []}
 
     my_playlist = spotify.playlist_tracks(id)    
-    playlist_properties = get_track_properties(track = str(), playlist = my_playlist)
+    playlist_properties, _ = get_track_properties(track = str(), playlist = my_playlist)
 
 
     for file in os.listdir(paths):
@@ -124,18 +125,26 @@ def compare_playlists(playlist_1, playlist_2):
         return(missing_tracks, idx)
     
 def get_track_properties(track = str(), playlist = str()):
+    token = get_token()
     if track != str():
         full_music_name = os.path.splitext(track)[0]
         artist_name = full_music_name.split("-", 1)[0].strip()        
         track_name = full_music_name.split("-", 1)[1].strip()
         return(full_music_name, artist_name, track_name)   
     elif playlist != str():
-        track_dict = {'track_name': [], 'track_id': [], 'url': []}
+        track_dict = {'track_name': [], 'track_artist': [], 'track_id': [], 'url': [], 'genres':[]}
         for i in range(playlist['total']):
+            result = get_track_information(token, playlist['items'][i]['track']['album']['artists'][0]['id'])['genres']
             track_dict['track_name'].append(playlist['items'][i]['track']['name'])
+            track_dict['track_artist'].append(playlist['items'][i]['track']['album']['artists'][0]['name'])
             track_dict['track_id'].append(playlist['items'][i]['track']['id'])
             track_dict['url'].append(playlist['items'][i]['track']['external_urls']['spotify'])
-
+            if result:
+                track_dict['genres'].append(result)
+            else:
+                track_dict['genres'].append("No Genre")
         return(track_dict)
+    
+
 
 

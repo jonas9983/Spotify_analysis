@@ -5,7 +5,7 @@ import json
 
 
 client_id = "7ffc843a14b947d28f600dcc67c6c1d4"
-client_secret = ""
+client_secret = "e734d92de37346529836384e0a9c5dea"
 
 
 def get_token():

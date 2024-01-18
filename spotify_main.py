@@ -3,21 +3,8 @@
 
 # Playlist ID = 2H1UmImj2tpiz6TIPSu75M
 
-import spotipy
-import sys
-from spotipy.oauth2 import SpotifyClientCredentials
-import base64
-from requests import post, get
-import os
-import json
-
-
 from prenda_utils import get_track_properties, download_missing_songs, check_music_duration
 from spotify_utils import get_playlist
-
-spotify = spotipy.Spotify(auth_manager=SpotifyClientCredentials(client_id= "71235600c4ce46f4ad90f99168ebf7ca", client_secret= "11540b15b6b64d7dba3e6cb500a610a1" ))
-
-
 
 def call_functions():
     #download_missing_songs(spotify= spotify, id= "2H1UmImj2tpiz6TIPSu75M", paths = "./sofiii/annie", dl = 0)

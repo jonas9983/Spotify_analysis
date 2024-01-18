@@ -17,12 +17,12 @@ from spotify_analysis import analyze_dataframe
 
 def get_playlist(update_dataframe = 0):
     dataframe_path = "./data/audio_features.csv"
-    user_ids = ['11127927763', 'anaserrogomes']
+    user_ids = ['11127927763', 'anaserrogomes', '31k27bhdk4puklqlfhgqxszgvxqy'] # Meu, Ana, Pitex
     playlist_properties = {}
     if (update_dataframe == 1): 
         token = get_token()
         #result = get_saved_songs(token) Nao funciona nao sei porque 
-        all_playlists = get_user_playlists(token = token, user_id= '11127927763') # My ID 11127927763 # Ana's ID anaserrogomes
+        all_playlists = get_user_playlists(token = token, user_id= '31k27bhdk4puklqlfhgqxszgvxqy') 
         playlists_id = get_playlists_id(all_playlists)
         playlist_properties = get_playlist_tracks(all_playlists = all_playlists, 
                                                 playlists_id = playlists_id, 
@@ -137,7 +137,10 @@ def save_json_dataframe(dataframe, filename, save = 0):
 
 def get_playlists_id(playlists):
     playlists_id = []
+    playlists_name = []
     for idx, key in enumerate(playlists['items']):
         playlists_id.append(playlists['items'][idx]['id'])
+        playlists_name.append(playlists['items'][idx]['name'])
+    print(playlists_name)
     return(playlists_id)
 
