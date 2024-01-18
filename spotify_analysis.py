@@ -11,17 +11,6 @@ import numpy as np
 
 import sys, os
 
-
-# Disable
-def blockPrint():
-    sys.stdout = open(os.devnull, "w")
-
-
-# Restore
-def enablePrint():
-    sys.stdout = sys.__stdout__
-
-
 def analyze_dataframe(features, filename, graph=0):
     features = dataset_information(dataset=features, filename=filename, change=0)
 
@@ -77,24 +66,6 @@ def analyze_dataframe(features, filename, graph=0):
     print(features[features.valence == features.valence.max()]) # Max valence
     print(new_features.loc[:, ~new_features.columns.isin(['track_name', 'track_artist', 'key', 'genres'])].groupby('danceability_binary').mean())
 """
-
-
-def apply_logistic_regression_model(X, y):
-    # Logistic Regression
-
-    # Basic framework for logistic regression
-
-    X_train, X_test, y_train, y_test = train_test_split(
-        X, y, test_size=0.2, random_state=42
-    )
-
-    model = LogisticRegression(solver="liblinear", random_state=0)
-    model.fit(X_train, y_train.values.ravel())
-
-    y_pred = model.predict(X_test)
-
-    return (y_test, y_pred, X_test, model)
-
 
 def dataset_information(dataset, filename, change=0):
     dataset.isnull().sum()  # There are no null values in the data
@@ -251,3 +222,19 @@ def data_analysis(dataset, show=0):
             sns.boxplot(x=dataset["key"], y=dataset["danceability"])
             plt.title("Danceability over the song's key")
             plt.show()
+
+def apply_logistic_regression_model(X, y):
+    # Logistic Regression
+
+    # Basic framework for logistic regression
+
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, test_size=0.2, random_state=42
+    )
+
+    model = LogisticRegression(solver="liblinear", random_state=0)
+    model.fit(X_train, y_train.values.ravel())
+
+    y_pred = model.predict(X_test)
+
+    return (y_test, y_pred, X_test, model)
