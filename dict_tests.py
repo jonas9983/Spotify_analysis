@@ -16,6 +16,8 @@ full_dict = {
     },
 }
 
+
+
 audio_features = {
     "audio_features": [
         {
@@ -125,6 +127,15 @@ playlist_id = [
     "5sK1legJCslY7BkNShIZ2w",
 ]
 
+max_ids = 50
+nr_track_ids = 102
+num_batches = (nr_track_ids + max_ids - 1) // max_ids
+
+print(num_batches)
+
+#batches = [track_ids[i * max_ids : (i + 1) * max_ids] for i in range(num_batches)]
+
+
 
 def flatten_dictionary(dict_to_flatten):
     flattened_dict = {
@@ -164,6 +175,6 @@ def iterate_playlist_id(playlist_id):
             print(i, idx)
 
 
-iterate_playlist_id(playlist_id=playlist_id)
+#iterate_playlist_id(playlist_id=playlist_id)
 # get_features(audio_features= audio_features, features = features)
 # get_track_analysis(['4eOEhu9eJZ0NMOo5cgK99a']*101)

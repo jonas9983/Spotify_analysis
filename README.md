@@ -16,7 +16,7 @@ If update_dataframe = 1:
 
     # PS: talvez possa mudar a change_pandas_variable, nao preciso de chama-la aqui
 
-else:
+if update_dataframe = 0:
     # read the audio_features.csv file on the data folder 
     # analyze this data 
 

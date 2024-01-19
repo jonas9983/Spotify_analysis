@@ -5,7 +5,7 @@ import json
 
 
 client_id = "7ffc843a14b947d28f600dcc67c6c1d4"
-client_secret = "e734d92de37346529836384e0a9c5dea"
+client_secret = ""
 
 
 def get_token():
@@ -69,8 +69,11 @@ def get_saved_songs(token):
     return json_result
 
 
-def get_user_playlists(token, user_id):
-    url = f"https://api.spotify.com/v1/users/{user_id}/playlists?limit=50"
+def get_user_playlists(token, user_id, offset = 0, limit=50):
+    if offset == "":
+        url = f"https://api.spotify.com/v1/users/{user_id}/playlists?limit=50"
+    else:
+        url = f"https://api.spotify.com/v1/users/{user_id}/playlists?limit=50&offset={offset}" 
     headers = get_auth_header(token)
     result = get(url, headers=headers)
     json_result = json.loads(result.content)

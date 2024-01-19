@@ -10,7 +10,7 @@ def call_functions():
     # download_missing_songs(spotify= spotify, id= "2H1UmImj2tpiz6TIPSu75M", paths = "./sofiii/annie", dl = 0)
     # check_music_duration(spotify= spotify, id= "37i9dQZF1DZ06evO0P3UNG")
     get_playlist(
-        update_dataframe=0
+        update_dataframe=1
     )  # Mix de jazz https://open.spotify.com/playlist/37i9dQZF1EQqA6klNdJvwx
 
 
