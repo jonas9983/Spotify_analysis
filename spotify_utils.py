@@ -6,6 +6,7 @@
 import pandas as pd
 import numpy as np
 import os
+import time
 
 from prenda_utils import get_track_properties
 from use_spotify_api import (
@@ -24,15 +25,16 @@ def get_playlist(update_dataframe=0):
         "11127927763",
         "anaserrogomes",
         "31k27bhdk4puklqlfhgqxszgvxqy",
-        '11133022471'
-    ]  # Meu, Ana, Pitex, Rafa
+        '11133022471', 
+        'sofiavasconcelos24'
+    ]  # Meu, Ana, Pitex, Rafa, Sofi
     playlist_properties = {}
     if update_dataframe == 1:
         token = get_token()
         # result = get_saved_songs(token) Nao funciona nao sei porque
         
         
-        all_playlists = get_all_users_playlists(token=token, user_id='11133022471')
+        all_playlists = get_all_users_playlists(token=token, user_id='sofiavasconcelos24')
 
         playlists_id = get_playlists_id(all_playlists)
         print(playlists_id, len(playlists_id))
@@ -44,11 +46,9 @@ def get_playlist(update_dataframe=0):
         )
         flattened_playlist_properties = flatten_dictionary(playlist_properties)
         playlist_properties_pd = change_panda_variables(
-            flattened_playlist_properties, dance_thresh=0.6
+            flattened_playlist_properties
         )
         print(playlist_properties_pd)
-
-        return
         save_json_dataframe(
             dataframe=playlist_properties_pd, filename=dataframe_path, save=1
         )
@@ -75,52 +75,50 @@ def get_all_users_playlists(token, user_id):
 
 def get_playlist_tracks(all_playlists, playlists_id, playlist_properties):
     for i, idx in enumerate(playlists_id):
-        if i in [0,1]:
-            print(i, idx)
-            features = {
-                "track_name": [],
-                "track_artist": [],
-                "track_id": [],
-                "user_id": [],
-                "playlist_id": [],
-                "genres": [],
-                "danceability": [],
-                "energy": [],
-                "key": [],
-                "loudness": [],
-                "speechiness": [],
-                "acousticness": [],
-                "instrumentalness": [],
-                "liveness": [],
-                "valence": [],
-                "tempo": [],
-            }
-            playlist = run_api_request(
-                all_playlists[i]["tracks"]["href"], query=""
-            )
-            for j in range(playlist["total"]):
-                if j == 50:
-                    playlist = run_api_request(
-                        all_playlists[i]["tracks"]["href"], query=f"?offset={j}"
-                    )
-                genres = get_track_information(
-                    playlist["items"][j % 50]["track"]["album"]["artists"][0]["id"]
-                )["genres"]
-                features["track_name"].append(playlist["items"][j % 50]["track"]["name"])
-                features["track_artist"].append(
-                    playlist["items"][j % 50]["track"]["album"]["artists"][0]["name"]
+        print(i, idx)
+        features = {
+            "track_name": [],
+            "track_artist": [],
+            "track_id": [],
+            "user_id": [],
+            "playlist_id": [],
+            "genres": [],
+            "danceability": [],
+            "energy": [],
+            "key": [],
+            "loudness": [],
+            "speechiness": [],
+            "acousticness": [],
+            "instrumentalness": [],
+            "liveness": [],
+            "valence": [],
+            "tempo": [],
+        }
+        time.sleep(10)
+        playlist = run_api_request(
+            all_playlists[i]["tracks"]["href"], query=""
+        )
+        for j in range(playlist["total"]):
+            if j == 50:
+                playlist = run_api_request(
+                    all_playlists[i]["tracks"]["href"], query=f"?offset={j}"
                 )
-                features["track_id"].append(playlist["items"][j % 50]["track"]["id"])
-                features["user_id"].append(all_playlists[i]["owner"]["id"])
-                features["playlist_id"].append(all_playlists[i]["id"])
-                if genres:
-                    features["genres"].append(genres)
-                else:
-                    features["genres"].append("No Genre")
-            features = get_audio_features(features["track_id"], features)
-            playlist_properties[idx] = features
-        else:
-            continue
+            genres = get_track_information(
+                playlist["items"][j % 50]["track"]["album"]["artists"][0]["id"]
+            )["genres"]
+            features["track_name"].append(playlist["items"][j % 50]["track"]["name"])
+            features["track_artist"].append(
+                playlist["items"][j % 50]["track"]["album"]["artists"][0]["name"]
+            )
+            features["track_id"].append(playlist["items"][j % 50]["track"]["id"])
+            features["user_id"].append(all_playlists[i]["owner"]["id"])
+            features["playlist_id"].append(all_playlists[i]["id"])
+            if genres:
+                features["genres"].append(genres)
+            else:
+                features["genres"].append("No Genre")
+        features = get_audio_features(features["track_id"], features)
+        playlist_properties[idx] = features
     return playlist_properties
 
 
@@ -158,11 +156,8 @@ def flatten_dictionary(dict_to_flatten):
     return flattened_dict
 
 
-def change_panda_variables(features, dance_thresh):
+def change_panda_variables(features):
     features = pd.DataFrame(features)
-    features["danceability_binary"] = features["danceability"].apply(
-        lambda x: int(1) if x >= dance_thresh else int(0)
-    )
     features["key"] = features["key"].apply( # Escrever melhor isto
         lambda x: (
             "C"

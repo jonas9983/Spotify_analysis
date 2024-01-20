@@ -3,6 +3,8 @@ from sklearn.linear_model import LogisticRegression
 from sklearn import metrics
 from sklearn.metrics import classification_report, confusion_matrix, accuracy_score
 
+from scipy.stats.stats import pearsonr
+
 import seaborn as sns
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -12,11 +14,20 @@ import numpy as np
 def analyze_dataframe(features, filename, graph=0):
     features = dataset_information(dataset=features, filename=filename, change=0)
 
-    return
+    print(features)
 
-    data_analysis(dataset=features[features["user_id"] == "anaserrogomes"], show=[0])
+    # dataset=features[features["user_id"] == "11133022471"]
+
+    data_analysis(dataset=features, show=[0])
+
+    ### Hypothesis Testing
+
+    testing_hypothesis(dataset = features)
+
 
     # Logistic Regression with just one explanatory variable (numeric for now)
+
+    return
 
     y_test, y_pred, X_test, model = apply_logistic_regression_model(
         X=features.loc[:, features.columns.isin(["energy"])],
@@ -88,35 +99,73 @@ def dataset_information(dataset, filename, change=0):
             dataset.loc[dataset["user_id"] == user_id, "user_id"] = "Figas"
         elif idx == 2:
             dataset.loc[dataset["user_id"] == user_id, "user_id"] = "Pitex"
+        elif idx == 3: 
+            dataset.loc[dataset["user_id"] == user_id, "user_id"] = "Rafa"
+        elif idx == 4: 
+            continue
 
     ### Handle outliers
 
-    columns_to_handle = ["instrumentalness", "loudness", "speechiness", "liveness"]
+    columns_to_handle = ["instrumentalness", "loudness", "speechiness", "liveness"] 
 
-    ## Tukey's rule (sucks?)
-    for idx, col in enumerate(columns_to_handle):
+    #### Analyze instrumentalness variable
+
+    dataset_instrumentalness = dataset['instrumentalness'].copy()
+
+    Q1 = dataset_instrumentalness.quantile(0.25)
+    Q3 = dataset_instrumentalness.quantile(0.75)
+    IQR = Q3 - Q1
+    lower_lim = Q1 - 0.8 * IQR
+    upper_lim = Q3 + 1.5 * IQR
+    outliers_15_low = dataset_instrumentalness < lower_lim
+    outliers_15_up = dataset_instrumentalness > upper_lim
+    
+
+    ## Tukey's rule 
+    for idx, col in enumerate(columns_to_handle): # This has to be done one by one
         Q1 = dataset[col].quantile(0.25)
         Q3 = dataset[col].quantile(0.75)
-        if col == "instrumentalness":
-            print(f"{col} -> Q1 = {Q1} | Q3 = {Q3}")
-            IQR = Q3 - Q1
-            print(f"IQR -> {IQR}")
+        print(f"{col} -> Q1 = {Q1} | Q3 = {Q3}")
+        IQR = Q3 - Q1
+        print(f"IQR -> {IQR}")
 
-            lower_lim = Q1 - 0.8 * IQR
-            upper_lim = Q3 + 1.5 * IQR
+        lower_lim = Q1 - 0.8 * IQR
+        upper_lim = Q3 + 1.5 * IQR
 
-            outliers_15_low = dataset[col] < lower_lim
-            outliers_15_up = dataset[col] > upper_lim
+        outliers_15_low = dataset[col] < lower_lim
+        outliers_15_up = dataset[col] > upper_lim
 
-            print(len(dataset[col][(outliers_15_low | outliers_15_up)]))
+        ### Remove outliers above the upper_lim and below lower_lim
 
-            print(f"{col} Lower = {lower_lim} | Upper = {upper_lim} need to plot this")
+        #dataset_tukey = dataset[(dataset[col] < outliers_15_up + outliers_15_up*0.20) & (dataset[col]> outliers_15_low + outliers_15_low*0.20)]
+        #print(f"{col} Lower = {lower_lim} | Upper = {upper_lim} need to plot this")
 
     if change == 1:
         ### Save new csv file
         dataset.to_csv(filename, mode="w", index=False, header=True)
 
     return dataset
+
+def testing_hypothesis(dataset):
+
+    ### Correlation test -> Check significance over the correlations between all the variables
+
+    pearson_test = {}
+    corr_matrix = dataset.drop(columns = 'danceability_binary').select_dtypes(
+        exclude=[np.object_]
+    ).corr()
+
+    # All thep- values are really low...
+
+    threshold = 0.01
+    corr_above_thresh = [[i, j] for i,j in zip(*np.where(np.abs(corr_matrix.values) > threshold)) if i!=j]
+
+    print(corr_above_thresh)
+    for idx in corr_above_thresh:
+        pearson_test[f'{corr_matrix.index[idx[0]]} and {corr_matrix.index[idx[1]]}'] = \
+        pearsonr(dataset[corr_matrix.index[idx[0]]], dataset[corr_matrix.index[idx[1]]])
+
+    print(pearson_test)
 
 
 def data_analysis(dataset, show=0):
@@ -148,6 +197,7 @@ def data_analysis(dataset, show=0):
             sns.pairplot(
                 dataset,
                 vars=[
+                    "danceability",
                     "energy",
                     "loudness",
                     "speechiness",
@@ -157,13 +207,13 @@ def data_analysis(dataset, show=0):
                     "valence",
                     "tempo",
                 ],
-                hue="danceability_binary",
             )
             plt.show()
         elif s == 5:
             corr_matrix = dataset_no_objects.drop(
                 columns=["danceability_binary"]
             ).corr()
+            print(corr_matrix)
             sns.heatmap(corr_matrix, annot=True)
             plt.title("Correlation matrix for all the variables")
             plt.show()
@@ -184,27 +234,6 @@ def data_analysis(dataset, show=0):
         elif s == 7:
             fig, ax = plt.subplots(3, 3, figsize=(11.7, 8.27))
             for col, val in enumerate(
-                dataset_no_objects.drop(columns=["danceability"])
-            ):
-                i, j = divmod(col, 3)
-                sns.boxplot(
-                    x=dataset_no_objects.drop(columns=["danceability"])[
-                        "danceability_binary"
-                    ],
-                    y=dataset_no_objects.drop(columns=["danceability"])[val],
-                    ax=ax[i, j],
-                    hue=dataset_no_objects.drop(columns=["danceability"])[
-                        "danceability_binary"
-                    ],
-                    legend=False,
-                )
-
-            plt.subplots_adjust(wspace=0.5, hspace=1)
-            fig.suptitle("Distribution of the variables over danceability")
-            plt.show()
-        elif s == 8:
-            fig, ax = plt.subplots(3, 3, figsize=(11.7, 8.27))
-            for col, val in enumerate(
                 dataset_no_objects.drop(columns=["danceability_binary"])
             ):
                 i, j = divmod(col, 3)
@@ -216,10 +245,11 @@ def data_analysis(dataset, show=0):
             plt.subplots_adjust(wspace=0.5, hspace=1)
             fig.suptitle("Distribution of the variables")
             plt.show()
-        elif s == 9:
+        elif s == 8:
             sns.boxplot(x=dataset["key"], y=dataset["danceability"])
             plt.title("Danceability over the song's key")
             plt.show()
+
 
 def apply_logistic_regression_model(X, y):
     # Logistic Regression
