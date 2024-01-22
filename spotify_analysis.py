@@ -16,26 +16,24 @@ def analyze_dataframe(features, filename, graph=0):
 
     # dataset=features[features["user_id"] == "11133022471"]
 
-    data_analysis(dataset=features[features["user_id"] == "Rafa"], show=[4,5,6,7])
+    features_no_objects = data_analysis(dataset=features, show=[0])
 
-    ### Hypothesis Testing
+
+    ### Hypothesis Testing 
 
     #testing_hypothesis(dataset = features)
 
-
     # Logistic Regression with just one explanatory variable (numeric for now)
 
-    return
 
     y_test, y_pred, X_test, model = apply_logistic_regression_model(
-        X=features.loc[:, features.columns.isin(["energy"])],
-        y=features.loc[:, features.columns.isin(["danceability_binary"])],
+            X=features.loc[:, features.columns.isin(['danceability', 'energy', 'acousticness'])],
+            y=features.loc[:, features.columns.isin(["popularity_binary"])],
     )
+    print(f'Accuracy: {accuracy_score(y_test, y_pred)}')
 
-    print("Accuracy: ", accuracy_score(y_test, y_pred))
+
     print("Confusion Matrix: \n", confusion_matrix(y_test, y_pred))
-
-    # sigmoid_function(model.coef_, model.intercept_)
 
     return
 
@@ -127,16 +125,13 @@ def dataset_information(dataset, filename, change=0):
     plt.title(f'Distribution of Instrumentalness variable without outliers')
     plt.show()"""
 
-
-    
-
     ## Tukey's rule 
     for idx, col in enumerate(columns_to_handle): # This has to be done one by one
         Q1 = dataset[col].quantile(0.25)
         Q3 = dataset[col].quantile(0.75)
-        print(f"{col} -> Q1 = {Q1} | Q3 = {Q3}")
+        #print(f"{col} -> Q1 = {Q1} | Q3 = {Q3}")
         IQR = Q3 - Q1
-        print(f"IQR -> {IQR}")
+        #print(f"IQR -> {IQR}")
 
         lower_lim = Q1 - 0.8 * IQR
         upper_lim = Q3 + 1.5 * IQR
@@ -155,27 +150,6 @@ def dataset_information(dataset, filename, change=0):
 
     return dataset
 
-def testing_hypothesis(dataset):
-
-    ### Correlation test -> Check significance over the correlations between all the variables
-
-    pearson_test = {}
-    corr_matrix = dataset.drop(columns = 'danceability_binary').select_dtypes(
-        exclude=[np.object_]
-    ).corr()
-
-    # All thep- values are really low...
-
-    threshold = 0.01
-    corr_above_thresh = [[i, j] for i,j in zip(*np.where(np.abs(corr_matrix.values) > threshold)) if i!=j]
-
-    print(corr_above_thresh)
-    for idx in corr_above_thresh:
-        pearson_test[f'{corr_matrix.index[idx[0]]} and {corr_matrix.index[idx[1]]}'] = \
-        pearsonr(dataset[corr_matrix.index[idx[0]]], dataset[corr_matrix.index[idx[1]]])
-
-    print(pearson_test)
-
 
 def data_analysis(dataset, show=0):
     dataset_no_objects = dataset.select_dtypes(
@@ -189,9 +163,9 @@ def data_analysis(dataset, show=0):
     for s in show:
         if s == 1:
             sns.countplot(
-                x="danceability_binary", data=dataset, palette=["blue", "orange"]
+                x="popularity_binary", data=dataset, palette=["blue", "orange"]
             )
-            plt.title("Absolute Frequency of Danceability (Binary) variable")
+            plt.title("Absolute Frequency of Popularity (Binary) variable")
             plt.show()
         elif s == 2:
             pd.crosstab(dataset.key, dataset.danceability_binary).plot(kind="bar")
@@ -209,45 +183,42 @@ def data_analysis(dataset, show=0):
                     "danceability",
                     "energy",
                     "loudness",
-                    "speechiness",
                     "acousticness",
                     "instrumentalness",
-                    "liveness",
                     "valence",
                     "tempo",
+                    "popularity",
+                    "duration_ms"
                 ],
             )
             plt.show()
         elif s == 5:
-            corr_matrix = dataset_no_objects.drop(
-                columns=["danceability_binary"]
-            ).corr()
-            print(corr_matrix)
+            corr_matrix = dataset_no_objects.corr()
             sns.heatmap(corr_matrix, annot=True)
             plt.title("Correlation matrix for all the variables")
             plt.show()
         elif s == 6:
             ### Analyze outliers from the data
-            fig, ax = plt.subplots(3, 3)
+            fig, ax = plt.subplots(4, 3)
             for col, val in enumerate(
-                dataset_no_objects.drop(columns=["danceability_binary"])
+                dataset_no_objects
             ):
                 i, j = divmod(col, 3)
                 sns.boxplot(
-                    x=dataset_no_objects.drop(columns=["danceability_binary"])[val],
+                    x=dataset_no_objects[val],
                     ax=ax[i, j],
                 )
             plt.subplots_adjust(wspace=0.5, hspace=1)
             fig.suptitle("Distribution of the variables")
             plt.show()
         elif s == 7:
-            fig, ax = plt.subplots(3, 3, figsize=(11.7, 8.27))
+            fig, ax = plt.subplots(4, 3, figsize=(11.7, 8.27))
             for col, val in enumerate(
-                dataset_no_objects.drop(columns=["danceability_binary"])
+                dataset_no_objects
             ):
                 i, j = divmod(col, 3)
                 sns.histplot(
-                    x=dataset_no_objects.drop(columns=["danceability_binary"])[val],
+                    x=dataset_no_objects[val],
                     legend=False,
                     ax=ax[i, j],
                 )
@@ -256,11 +227,15 @@ def data_analysis(dataset, show=0):
             plt.show()
         elif s == 8:
             for idx, val in enumerate(
-                dataset_no_objects.drop(columns=["danceability_binary"])
+                dataset_no_objects
                 ):
                 sns.boxplot(x=dataset["key"], y=dataset[val])
                 plt.title(f'{val} over the song\'s key')
                 plt.show()
+
+    return dataset_no_objects
+
+
 
 
 def apply_logistic_regression_model(X, y):
@@ -269,7 +244,7 @@ def apply_logistic_regression_model(X, y):
     # Basic framework for logistic regression
 
     X_train, X_test, y_train, y_test = train_test_split(
-        X, y, test_size=0.2, random_state=42
+        X, y, test_size=0.3, random_state=42
     )
 
     model = LogisticRegression(solver="liblinear", random_state=0)
@@ -278,3 +253,24 @@ def apply_logistic_regression_model(X, y):
     y_pred = model.predict(X_test)
 
     return (y_test, y_pred, X_test, model)
+
+def testing_hypothesis(dataset):
+
+    ### Correlation test -> Check significance over the correlations between all the variables
+
+    pearson_test = {}
+    corr_matrix = dataset.select_dtypes(
+        exclude=[np.object_]
+    ).corr()
+
+    # All the p- values are really low...
+
+    threshold = 0.7
+    corr_above_thresh = [[i, j] for i,j in zip(*np.where(np.abs(corr_matrix.values) >= threshold)) if i!=j]
+
+    print(corr_above_thresh)
+    for idx in corr_above_thresh:
+        pearson_test[f'{corr_matrix.index[idx[0]]} and {corr_matrix.index[idx[1]]}'] = \
+        pearsonr(dataset[corr_matrix.index[idx[0]]], dataset[corr_matrix.index[idx[1]]])
+
+    print(pearson_test)

@@ -55,8 +55,7 @@ def get_playlist(update_dataframe=0):
     else:
         features = pd.read_csv(dataframe_path)
         print("else")
-        features = get_tracks_popularity(features)
-        #analyze_dataframe(features=features, filename=dataframe_path, graph=0)
+        analyze_dataframe(features=features, filename=dataframe_path, graph=0)
 
 
 def get_all_users_playlists(token, user_id):
@@ -94,6 +93,8 @@ def get_playlist_tracks(all_playlists, playlists_id, playlist_properties):
             "liveness": [],
             "valence": [],
             "tempo": [],
+            "popularity": [],
+            "duration_ms": []
         }
         time.sleep(10)
         playlist = run_api_request(
@@ -114,6 +115,8 @@ def get_playlist_tracks(all_playlists, playlists_id, playlist_properties):
             features["track_id"].append(playlist["items"][j % 50]["track"]["id"])
             features["user_id"].append(all_playlists[i]["owner"]["id"])
             features["playlist_id"].append(all_playlists[i]["id"])
+            features['popularity'].append(all_playlists[i]['popularity'])
+            features['duration_ms'].append(all_playlists[i]['duration_ms'])
             if genres:
                 features["genres"].append(genres)
             else:
@@ -123,11 +126,31 @@ def get_playlist_tracks(all_playlists, playlists_id, playlist_properties):
     return playlist_properties
 
 def get_tracks_popularity(dataset):
-    track_names = dataset['track_name']
-    for idx, track in enumerate(track_names):
-        #get track's popularity 
-        return
+    track_ids = dataset['track_id']
+    max_ids = 50
+    nr_track_ids = len(track_ids)
+    num_batches = (nr_track_ids + max_ids - 1) // max_ids
+    batches = [track_ids[i * max_ids : (i + 1) * max_ids] for i in range(num_batches)]
 
+    columns_to_add = {'popularity': [], 'duration_ms': []}
+
+    for i, batch in enumerate(batches,1):
+        str_track_ids = ",".join(batch)
+        url = f"https://api.spotify.com/v1/tracks?ids={str_track_ids}"
+        try:
+            all_tracks = run_api_request(url, query = "")['tracks']
+            for j, tracks in enumerate(all_tracks):
+                columns_to_add['popularity'].append(tracks['popularity'])
+                columns_to_add['duration_ms'].append(tracks['duration_ms'])
+        except (TypeError, KeyError, IndexError) as e:
+            # Handle the specific exception or print an error message
+            print(f"Error: {e}")
+            # Optionally, you can log the error or take other actions
+
+    dataset['popularity'] = columns_to_add['popularity']
+    dataset['duration_ms'] = columns_to_add['duration_ms']
+
+    return(dataset)
 
 
 def get_audio_features(track_ids, features):
@@ -205,7 +228,7 @@ def save_json_dataframe(dataframe, filename, save=0):
         if not os.path.exists(filename) or os.stat(filename).st_size == 0:
             dataframe.to_csv(filename, index=False)
         else:  # Caso contrario vamos adicionar à pasta
-            dataframe.to_csv(filename, mode="a", index=False, header=False)
+            dataframe.to_csv(filename, mode="w", index=False, header=True)
 
 
 def get_playlists_id(playlists):
