@@ -14,15 +14,13 @@ import numpy as np
 def analyze_dataframe(features, filename, graph=0):
     features = dataset_information(dataset=features, filename=filename, change=0)
 
-    print(features)
-
     # dataset=features[features["user_id"] == "11133022471"]
 
-    data_analysis(dataset=features, show=[0])
+    data_analysis(dataset=features[features["user_id"] == "Rafa"], show=[4,5,6,7])
 
     ### Hypothesis Testing
 
-    testing_hypothesis(dataset = features)
+    #testing_hypothesis(dataset = features)
 
 
     # Logistic Regression with just one explanatory variable (numeric for now)
@@ -119,6 +117,17 @@ def dataset_information(dataset, filename, change=0):
     upper_lim = Q3 + 1.5 * IQR
     outliers_15_low = dataset_instrumentalness < lower_lim
     outliers_15_up = dataset_instrumentalness > upper_lim
+
+    dataset_all_outliers = dataset_instrumentalness[dataset_instrumentalness > outliers_15_up]
+
+    """sns.boxplot(dataset_instrumentalness)
+    plt.title(f'Distribution of Instrumentalness variable')
+    plt.show()
+    sns.boxplot(dataset_all_outliers)
+    plt.title(f'Distribution of Instrumentalness variable without outliers')
+    plt.show()"""
+
+
     
 
     ## Tukey's rule 
@@ -246,9 +255,12 @@ def data_analysis(dataset, show=0):
             fig.suptitle("Distribution of the variables")
             plt.show()
         elif s == 8:
-            sns.boxplot(x=dataset["key"], y=dataset["danceability"])
-            plt.title("Danceability over the song's key")
-            plt.show()
+            for idx, val in enumerate(
+                dataset_no_objects.drop(columns=["danceability_binary"])
+                ):
+                sns.boxplot(x=dataset["key"], y=dataset[val])
+                plt.title(f'{val} over the song\'s key')
+                plt.show()
 
 
 def apply_logistic_regression_model(X, y):

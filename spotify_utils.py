@@ -55,7 +55,8 @@ def get_playlist(update_dataframe=0):
     else:
         features = pd.read_csv(dataframe_path)
         print("else")
-        analyze_dataframe(features=features, filename=dataframe_path, graph=0)
+        features = get_tracks_popularity(features)
+        #analyze_dataframe(features=features, filename=dataframe_path, graph=0)
 
 
 def get_all_users_playlists(token, user_id):
@@ -120,6 +121,13 @@ def get_playlist_tracks(all_playlists, playlists_id, playlist_properties):
         features = get_audio_features(features["track_id"], features)
         playlist_properties[idx] = features
     return playlist_properties
+
+def get_tracks_popularity(dataset):
+    track_names = dataset['track_name']
+    for idx, track in enumerate(track_names):
+        #get track's popularity 
+        return
+
 
 
 def get_audio_features(track_ids, features):
